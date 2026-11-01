@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#c8102e">
+<title>Kalkulator Angsuran</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff; --surface: #ffffff; --ink: #2b1a1d; --muted: #6e5559;
+    --line: #ecd3d6; --accent: #c8102e; --accent-dark: #9b0c23; --accent-ink: #ffffff; --tint: #fdecee;
+    --font: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 56px; display: grid; gap: 18px; }
+
+  /* ---------- header ---------- */
+  header { position: relative; overflow: hidden; background: var(--accent); color: var(--accent-ink); padding: 30px 26px 32px; border-radius: 18px; }
+  header::after { content: "Rp"; position: absolute; right: -6px; bottom: -34px; font-size: 9.5rem; font-weight: 800; line-height: 1; letter-spacing: -.04em; color: #fff; opacity: .1; pointer-events: none; }
+  h1 { position: relative; z-index: 1; font-size: clamp(1.7rem, 6vw, 2.3rem); line-height: 1.15; font-weight: 800; letter-spacing: -.025em; margin: 0 0 8px; }
+  h2 { display: flex; align-items: center; gap: 12px; font-size: 1.15rem; line-height: 1.3; font-weight: 700; letter-spacing: -.01em; margin: 0 0 6px; color: var(--ink); }
+  p.sub { margin: 0; color: var(--muted); max-width: 62ch; font-size: .95rem; }
+  header p.sub { position: relative; z-index: 1; color: #fff0f2; font-size: 1rem; max-width: 54ch; }
+
+  /* ---------- panel ---------- */
+  section { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px 22px; box-shadow: 0 18px 32px -26px rgba(155, 12, 35, .55); }
+  .step { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: .95rem; font-weight: 800; }
+
+  .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; margin-top: 18px; }
+  label.f { display: grid; gap: 6px; font-size: .9rem; font-weight: 600; color: var(--muted); flex: 1 1 100%; }
+  input { font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; width: 100%; transition: border-color .15s; }
+  input:hover { border-color: #dcaab1; }
+  input:focus { border-color: var(--accent); }
+  input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  input::placeholder { color: #b59ea2; font-weight: 400; }
+  #c-dp { font-size: 1.35rem; font-weight: 700; padding: 14px 16px; }
+  .hint { min-height: 1.4em; margin: 6px 0 0; font-size: .9rem; font-weight: 600; color: var(--accent-dark); }
+
+  fieldset { border: 0; padding: 0; margin: 0; flex: 1 1 100%; min-width: 0; }
+  fieldset.solo { margin-top: 18px; }
+  legend { font-size: .9rem; font-weight: 600; color: var(--muted); padding: 0; margin-bottom: 8px; }
+
+  /* ---------- pilihan tenor ---------- */
+  .chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; position: relative; }
+  .chips input { position: absolute; opacity: 0; width: 1px; height: 1px; padding: 0; }
+  .chips label { cursor: pointer; text-align: center; padding: 11px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font-weight: 600; font-size: .95rem; transition: background-color .15s, border-color .15s, color .15s; }
+  .chips input:not(:disabled) + label:hover { border-color: var(--accent); color: var(--accent); }
+  .chips input:checked + label { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .chips input:disabled + label { cursor: default; }
+  .chips input:disabled:not(:checked) + label { opacity: .4; }
+  .chips input:focus-visible + label { outline: 3px solid var(--accent-dark); outline-offset: 2px; }
+
+  /* ---------- tabel brosur ---------- */
+  .tablewrap { overflow-x: auto; margin-top: 18px; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0 8px; min-width: 360px; }
+  th { font-size: .85rem; color: var(--muted); font-weight: 600; text-align: left; padding: 0 8px 0 14px; }
+  th + th { padding: 0 14px 0 8px; text-align: right; }
+  td { padding: 0; }
+  td input { text-align: right; font-weight: 600; padding: 12px 14px; }
+  td.fixed { font-weight: 700; color: var(--accent-dark); background: var(--tint); padding: 0 14px; width: 40%; border: 1.5px solid var(--line); border-right: 0; border-radius: 12px 0 0 12px; font-size: 1.05rem; }
+  td.fixed + td { padding-left: 0; }
+  td.fixed + td input { border-radius: 0 12px 12px 0; }
+
+  /* ---------- status model ---------- */
+  #model { margin-top: 16px; padding: 12px 16px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); font-size: .92rem; }
+  #model.ok { background: var(--tint); border-color: #f2bcc4; border-left: 5px solid var(--accent); color: var(--ink); }
+  #model.warn, #hasil.warn { background: var(--tint); border: 1.5px dashed var(--accent-dark); color: var(--accent-dark); font-weight: 600; }
+
+  /* ---------- hasil (tiket) ---------- */
+  #hasil { position: relative; margin-top: 18px; padding: 22px; border-radius: 16px; background: var(--bg); border: 1.5px dashed var(--line); color: var(--muted); text-align: center; }
+  #hasil.warn { text-align: left; }
+  #hasil.ok { background: var(--accent); border: 1px solid var(--accent); color: var(--accent-ink); text-align: left; padding: 26px 30px; box-shadow: 0 22px 34px -24px rgba(155, 12, 35, .8); }
+  #hasil.ok::before, #hasil.ok::after { content: ""; position: absolute; top: 50%; width: 22px; height: 22px; margin-top: -11px; border-radius: 50%; background: var(--surface); }
+  #hasil.ok::before { left: -12px; }
+  #hasil.ok::after { right: -12px; }
+  .big { font-size: clamp(1.8rem, 7.5vw, 2.7rem); font-weight: 800; line-height: 1.15; letter-spacing: -.03em; }
+  .detail { margin-top: 12px; font-size: .95rem; line-height: 1.75; }
+  #hasil.ok .detail { color: var(--accent-ink); }
+
+  @media (min-width: 560px) {
+    label.f { flex: 1 1 240px; }
+    fieldset { flex: 2 1 320px; }
+    section { padding: 28px 28px; }
+  }
+  @media (max-width: 440px) {
+    .chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    section { padding: 22px 16px; }
+    #hasil.ok { padding: 24px 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Kalkulator angsuran</h1>
+    <p class="sub">Salin data dari brosur di bagian 1, lalu cek angsuran untuk DP berapa pun di bagian 2. Semua angka dalam ribu rupiah: 5.000 = Rp 5.000.000.</p>
+  </header>
+
+  <section aria-labelledby="h-setup">
+    <h2 id="h-setup"><span class="step" aria-hidden="true">1</span>Data brosur (pengaturan sistem)</h2>
+    <p class="sub">Pilih tenor, lalu isi angsuran per bulan dari brosur untuk 2 DP yang tertera di tabel. Ulangi untuk tiap tenor. Data tiap tenor disimpan sendiri-sendiri.</p>
+    <fieldset class="solo"><legend>Tenor (bulan)</legend><div class="chips" id="s-tenor"></div></fieldset>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>DP di brosur (ribu)</th><th>Angsuran per bulan (ribu)</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="model" role="status"></div>
+  </section>
+
+  <section aria-labelledby="h-calc">
+    <h2 id="h-calc"><span class="step" aria-hidden="true">2</span>Cek angsuran</h2>
+    <p class="sub">Tenor mengikuti pilihan di bagian 1. Masukkan DP (ribu), hasilnya langsung muncul.</p>
+    <div class="row">
+      <label class="f">DP pembeli (ribu)<input id="c-dp" inputmode="numeric" placeholder="10.000"></label>
+      <fieldset><legend>Tenor (sesuai pilihan di atas)</legend><div class="chips" id="c-tenor"></div></fieldset>
+    </div>
+    <p class="hint" id="dp-hint"></p>
+    <div id="hasil" role="status" aria-live="polite">Masukkan DP untuk melihat angsuran.</div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var KEY = "kalkulator-angsuran-v6";
+  var TENORS = [12, 18, 24, 30];
+  var DP_TETAP = [3000, 4000];   // DP di data sistem (ribu), tetap dan tidak bisa diubah pengguna
+  var $ = function (id) { return document.getElementById(id); };
+  var digits = function (s) { return String(s).replace(/\D/g, ""); };
+  var id = function (n) { return Math.round(n).toLocaleString("id-ID"); };
+  var rpR = function (ribu) { return "Rp " + id(ribu * 1000); };     // ribu -> rupiah penuh
+  var fmt = function (n) { return n ? Number(n).toLocaleString("id-ID") : ""; };
+
+  var st = load();
+  function blankRows() { return DP_TETAP.map(function (d) { return {dp: d, ang: 0}; }); }
+  function load() {
+    var s = null, out = {tenor: 12, data: {}};
+    try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    if (s && TENORS.indexOf(s.tenor) >= 0) out.tenor = s.tenor;
+    TENORS.forEach(function (t) {
+      var d = s && s.data && s.data[t];
+      out.data[t] = blankRows();
+      // angsuran lama dipakai hanya kalau DP-nya sama dengan DP tetap, supaya pasangan DP dan angsuran tidak tertukar
+      if (d && d.length === 2) d.forEach(function (r, i) { if (r.dp === DP_TETAP[i] && r.ang > 0) out.data[t][i].ang = r.ang; });
+    });
+    return out;
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+
+  // garis tren per tenor: angsuran(DP) = ang1 + kemiringan * (DP - dp1)
+  function line(t) {
+    var a = st.data[t][0], b = st.data[t][1];
+    if (a.dp === null || b.dp === null || !(a.ang > 0) || !(b.ang > 0)) return {err: "Isi angsuran untuk kedua DP pada tenor " + t + " bulan."};
+    if (a.dp === b.dp) return {err: "Kedua data harus punya DP yang berbeda."};
+    var slope = (b.ang - a.ang) / (b.dp - a.dp);
+    if (slope >= 0) return {err: "Angsuran harus lebih kecil pada DP yang lebih besar. Cek lagi angkanya."};
+    return {ok: true, dp1: a.dp, dp2: b.dp, ang1: a.ang, slope: slope, lo: Math.min(a.dp, b.dp), hi: Math.max(a.dp, b.dp)};
+  }
+
+  // ---------- bagian 1 ----------
+  function chips(cid, def) {
+    $(cid).innerHTML = TENORS.map(function (t) {
+      return '<input type="radio" name="' + cid + '" id="' + cid + '-' + t + '" value="' + t + '"' + (t === def ? " checked" : "") +
+             '><label id="lbl-' + cid + '-' + t + '" for="' + cid + '-' + t + '">' + t + ' bulan</label>';
+    }).join("");
+  }
+  function render() {
+    $("tbody").innerHTML = st.data[st.tenor].map(function (r, i) {
+      return '<tr><td class="fixed">' + Number(r.dp).toLocaleString("id-ID") + '</td>' +
+             '<td><input data-r="' + i + '" data-f="ang" inputmode="numeric" placeholder="Angsuran" aria-label="Angsuran untuk DP ' + Number(r.dp).toLocaleString("id-ID") + ' ribu" value="' + fmt(r.ang) + '"></td></tr>';
+    }).join("");
+  }
+  $("tbody").addEventListener("input", function (e) {
+    var el = e.target, f = el.dataset.f; if (!f) return;
+    var d = digits(el.value); el.value = d ? Number(d).toLocaleString("id-ID") : "";
+    st.data[st.tenor][+el.dataset.r][f] = d ? Number(d) : (f === "dp" ? null : 0);
+    save(); refresh();
+  });
+  chips("s-tenor", st.tenor);
+  chips("c-tenor", st.tenor);
+  TENORS.forEach(function (t) { $("c-tenor-" + t).disabled = true; });   // tenor cek angsuran ikut bagian 1
+  $("s-tenor").addEventListener("change", function (e) {
+    st.tenor = Number(e.target.value); $("c-tenor-" + st.tenor).checked = true;
+    save(); render(); refresh();
+  });
+
+  function refresh() {
+    var L = line(st.tenor), box = $("model");
+    if (!L.ok) { box.className = "warn"; box.textContent = L.err; }
+    else {
+      box.className = "ok";
+      box.textContent = "Tenor " + st.tenor + " bulan: tiap DP naik 1.000 (Rp 1.000.000), angsuran turun sekitar " + id(-L.slope * 1000) + " (ribu).";
+    }
+    calc();
+  }
+
+  // ---------- bagian 2 ----------
+  $("c-dp").addEventListener("input", function (e) {
+    var d = digits(e.target.value); e.target.value = d ? Number(d).toLocaleString("id-ID") : ""; calc();
+  });
+  function show(cls, html) { var h = $("hasil"); h.className = cls; h.innerHTML = html; }
+
+  function calc() {
+    var dpText = digits($("c-dp").value), t = st.tenor, L = line(t);
+    $("dp-hint").textContent = dpText ? "= " + rpR(Number(dpText)) : "";
+    if (!L.ok) { show("warn", "Lengkapi data brosur tenor " + t + " bulan di bagian 1 dulu."); return; }
+    if (!dpText) { show("", "Masukkan DP untuk melihat angsuran."); return; }
+    var dp = Number(dpText);
+    var ang = L.ang1 + L.slope * (dp - L.dp1);
+    if (ang <= 0) { show("warn", "DP terlalu besar: garis tren angsuran tenor " + t + " bulan sudah mencapai 0. Cek DP atau data brosur."); return; }
+    ang = Math.round(ang);
+    var outside = dp < L.lo || dp > L.hi;
+    var u = (dp - L.dp1) / (L.dp2 - L.dp1), err = 0.5 * (Math.abs(1 - u) + Math.abs(u));   // batas selisih akibat pembulatan angka brosur
+    show("ok", '<div class="big">' + rpR(ang) + ' / bulan</div><div class="detail">' + id(ang) + ' ribu per bulan · DP ' + rpR(dp) + ' · ' + t +
+      ' bulan<br>Total bayar ' + rpR(dp + ang * t) +
+      (outside ? '<br>DP ini di luar rentang data brosur (' + id(L.lo) + ' sampai ' + id(L.hi) + ' ribu), jadi hasilnya estimasi dari garis tren, kemungkinan selisih sampai ± ' + id(Math.ceil(err)) + ' ribu karena angka brosur dibulatkan.' : '') + '</div>');
+  }
+
+  render(); refresh();
+})();
+</script>
+</body>
+</html>
