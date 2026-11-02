@@ -41,7 +41,17 @@
   input:focus-visible { outline: 2px solid transparent; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(200, 16, 46, .18); }
   input::placeholder { color: #b59ea2; font-weight: 400; }
   #c-dp { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; padding: 14px 16px; }
+  h2 + p.sub { margin-top: 8px; }
   .hint { min-height: 1.4em; margin: 6px 0 0; font-size: .9rem; font-weight: 600; color: var(--accent-dark); }
+  button.copy { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 14px; padding: 14px 18px; font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer; color: var(--accent); background: var(--bg); border: 1.5px solid var(--accent); border-radius: 14px; transition: background-color .15s, color .15s, border-color .15s; }
+  button.copy:hover { background: var(--tint); }
+  button.copy:active { background: #fadde1; }
+  button.copy:focus-visible { outline: 2px solid transparent; box-shadow: 0 0 0 4px rgba(200, 16, 46, .18); }
+  button.copy.done { background: var(--accent); color: var(--accent-ink); }
+  .copymsg { margin-top: 10px; white-space: pre-line; }
+  .autonote { min-height: 0; margin: 2px 0 0; font-weight: 500; color: var(--muted); }
+  .chips.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  td input.auto { font-style: italic; color: #8a5a62; border-style: dashed; border-color: #e0a3ad; }
 
   fieldset { border: 0; padding: 0; margin: 0; flex: 1 1 100%; min-width: 0; }
   fieldset.solo { margin-top: 18px; }
@@ -117,14 +127,22 @@
   </header>
 
   <section aria-labelledby="h-setup">
-    <h2 id="h-setup"><span class="step" aria-hidden="true">1</span>Data brosur (pengaturan sistem)</h2>
-    <fieldset class="solo"><legend>Tenor</legend><div class="chips" id="s-tenor"></div></fieldset>
+    <h2 id="h-setup"><span class="step" aria-hidden="true">1</span>Angka dari brosur</h2>
+    <p class="sub">Isi 2 baris tenor 12 dari brosur motor yang sedang dilihat, tenor lain terisi otomatis. Pakai baris paling atas dan paling bawah supaya lebih tepat.</p>
+    <fieldset class="solo"><legend>Jenis motor</legend>
+      <div class="chips two" id="s-jenis">
+        <input type="radio" name="jenis" id="jenis-umum" value="umum" checked><label for="jenis-umum">Selain Beat</label>
+        <input type="radio" name="jenis" id="jenis-beat" value="beat"><label for="jenis-beat">Beat</label>
+      </div>
+    </fieldset>
+    <fieldset class="solo"><legend>Pilih tenor</legend><div class="chips" id="s-tenor"></div></fieldset>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>DP di brosur (ribu)</th><th>Angsuran per bulan (ribu)</th></tr></thead>
+        <thead><tr><th>DP semua tenor (ribu)</th><th>Angsuran per bulan (ribu)</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
+    <p class="hint autonote" id="auto-note" role="status"></p>
     <div id="model" role="status"></div>
   </section>
 
@@ -132,18 +150,29 @@
     <h2 id="h-calc"><span class="step" aria-hidden="true">2</span>Cek angsuran</h2>
     <div class="row">
       <label class="f">DP pembeli (ribu)<input id="c-dp" inputmode="numeric" placeholder="10.000"></label>
-      <fieldset><legend>Tenor</legend><div class="chips" id="c-tenor"></div></fieldset>
     </div>
     <p class="hint" id="dp-hint"></p>
     <div id="hasil" role="status" aria-live="polite">Masukkan DP untuk melihat angsuran.</div>
+    <button id="btn-copy" class="copy" type="button">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>
+      <span id="copy-label">Salin angsuran semua tenor</span>
+    </button>
+    <p class="hint copymsg" id="copy-msg" role="status" aria-live="polite"></p>
   </section>
 </main>
 
 <script>
 (function () {
-  var KEY = "kalkulator-angsuran-v6";
+  var KEY = "kalkulator-angsuran-v7", OLD_KEY = "kalkulator-angsuran-v6";
   var TENORS = [12, 18, 24, 30];
-  var DP_AWAL = [3000, 4000];   // DP awal di data sistem (ribu), hanya nilai bawaan: pengguna bisa mengubahnya
+  // pola hasil belajar dari brosur: angsuran tenor t (ribu) = w0 + w1 * (angsuran tenor 12 di DP yang sama) + w2 * X
+  // X = kemiringan tenor 12 (selain Beat) atau DP itu sendiri (Beat, karena subsidinya beda tiap tenor)
+  var POLA = {
+    umum: {18: [-372.0985, 0.72457391, 3596.9774], 24: [2009.2909, 0.49507479, -17180.605], 30: [2205.2964, 0.40168864, -18629.065]},
+    beat: {18: [-243.75082, 0.83938323, -0.0075220749], 24: [-305.11373, 0.74394936, -0.0079337906], 30: [-141.02886, 0.57269472, -0.0012193523]}
+  };
+  var GALAT = {umum: {18: 20, 24: 50, 30: 35}, beat: {18: 25, 24: 25, 30: 10}};   // kira-kira selisih terbesar yang wajar (ribu) saat diuji ke brosur asli
+  var DP_AWAL = [3000, 4000];   // DP bawaan di data sistem (ribu); pengguna bisa mengubahnya, dan berlaku untuk semua tenor
   var $ = function (id) { return document.getElementById(id); };
   var digits = function (s) { return String(s).replace(/\D/g, ""); };
   var id = function (n) { return Math.round(n).toLocaleString("id-ID"); };
@@ -151,33 +180,74 @@
   var fmt = function (n) { return n ? Number(n).toLocaleString("id-ID") : ""; };
 
   var st = load();
-  function blankRows() { return DP_AWAL.map(function (d) { return {dp: d, ang: 0}; }); }
+  function num(v) { return v !== null && v !== "" && isFinite(v) && Number(v) >= 0 ? Number(v) : null; }
   function load() {
-    var s = null, out = {tenor: 12, data: {}};
+    var out = {tenor: 12, jenis: "umum", dp: DP_AWAL.slice(), ang: {}}, s = null, old = null;
+    TENORS.forEach(function (t) { out.ang[t] = [0, 0]; });
     try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
-    if (s && TENORS.indexOf(s.tenor) >= 0) out.tenor = s.tenor;
-    TENORS.forEach(function (t) {
-      var d = s && s.data && s.data[t];
-      out.data[t] = blankRows();
-      // DP dan angsuran tersimpan dipakai sebagai satu pasangan, supaya tidak tertukar
-      if (d && d.length === 2) d.forEach(function (r, i) {
-        if (!r) return;
-        if (r.dp === null || (isFinite(r.dp) && r.dp >= 0 && r.dp !== "")) out.data[t][i].dp = r.dp === null ? null : Number(r.dp);
-        if (r.ang > 0) out.data[t][i].ang = Number(r.ang);
+    if (s && s.dp && s.dp.length === 2 && s.ang) {                       // format baru: DP satu untuk semua tenor
+      if (TENORS.indexOf(s.tenor) >= 0) out.tenor = s.tenor;
+      if (s.jenis === "beat") out.jenis = "beat";
+      out.dp = [num(s.dp[0]), num(s.dp[1])];
+      TENORS.forEach(function (t) {
+        var a = s.ang[t];
+        if (a && a.length === 2) out.ang[t] = [Number(a[0]) > 0 ? Number(a[0]) : 0, Number(a[1]) > 0 ? Number(a[1]) : 0];
       });
-    });
+      return out;
+    }
+    try { old = JSON.parse(localStorage.getItem(OLD_KEY)); } catch (e) {}  // migrasi dari versi lama (DP per tenor)
+    if (old && old.data) {
+      if (TENORS.indexOf(old.tenor) >= 0) out.tenor = old.tenor;
+      var src = null;
+      [out.tenor].concat(TENORS).forEach(function (t) {
+        var d = old.data[t];
+        if (!src && d && d.length === 2 && d[0] && d[1] && d[0].ang > 0 && d[1].ang > 0) src = d;   // DP bersama diambil dari tenor yang sudah terisi
+      });
+      var base = src || old.data[out.tenor];
+      if (base && base.length === 2) out.dp = [num(base[0] && base[0].dp), num(base[1] && base[1].dp)];
+      TENORS.forEach(function (t) {
+        var d = old.data[t];
+        // angsuran lama dipakai hanya kalau DP-nya sama dengan DP bersama, supaya pasangan DP dan angsuran tidak tertukar
+        if (d && d.length === 2) d.forEach(function (r, i) { if (r && r.dp === out.dp[i] && r.ang > 0) out.ang[t][i] = Number(r.ang); });
+      });
+    }
     return out;
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
 
+  // ---------- isi otomatis tenor 18, 24, 30 dari tenor 12 ----------
+  function dasar() {                         // garis tenor 12 dari dua baris, atau null kalau belum lengkap
+    var d = st.dp, a = st.ang[12];
+    if (d[0] === null || d[1] === null || !(a[0] > 0) || !(a[1] > 0) || d[0] === d[1]) return null;
+    var k = (a[0] - a[1]) / (d[1] - d[0]);
+    if (!(k > 0)) return null;
+    return {k: k, at: function (x) { return a[0] + (a[1] - a[0]) * (x - d[0]) / (d[1] - d[0]); }};
+  }
+  function auto(t, i) {                      // perkiraan angsuran (ribu, belum dibulatkan) tenor t di DP baris i, 0 kalau belum bisa
+    if (t === 12) return 0;
+    var B = dasar(); if (!B) return 0;
+    var w = POLA[st.jenis][t], x = st.dp[i];
+    var jarak = Math.abs(st.dp[1] - st.dp[0]), noise2 = Math.pow(0.41 / jarak, 2), sebaran2 = 0.0033 * 0.0033;   // makin dekat dua DP, makin kasar kemiringannya
+    var k = 0.1042 + (B.k - 0.1042) * sebaran2 / (sebaran2 + noise2);
+    var v = w[0] + w[1] * B.at(x) + w[2] * (st.jenis === "beat" ? x : Math.min(0.112, Math.max(0.095, k)));
+    return v > 0 ? v : 0;
+  }
+  function eff(t, i) {                       // isian manual menang atas perkiraan; kalau baris lain manual, perkiraan ikut bergeser ke situ
+    var m = st.ang[t][i]; if (m > 0) return m;
+    var a = auto(t, i), j = 1 - i, mj = st.ang[t][j];
+    if (a > 0 && mj > 0) { var aj = auto(t, j); if (aj > 0) return mj + (a - aj); }
+    return a;
+  }
+  function isAuto(t) { return t !== 12 && (!(st.ang[t][0] > 0) || !(st.ang[t][1] > 0)) && eff(t, 0) > 0 && eff(t, 1) > 0; }
+
   // garis tren per tenor: angsuran(DP) = ang1 + kemiringan * (DP - dp1)
   function line(t) {
-    var a = st.data[t][0], b = st.data[t][1];
-    if (a.dp === null || b.dp === null || !(a.ang > 0) || !(b.ang > 0)) return {err: "Isi DP dan angsuran untuk kedua baris pada tenor " + t + " bulan."};
-    if (a.dp === b.dp) return {err: "Kedua data harus punya DP yang berbeda."};
-    var slope = (b.ang - a.ang) / (b.dp - a.dp);
+    var d = st.dp, a = [eff(t, 0), eff(t, 1)];
+    if (d[0] === null || d[1] === null || !(a[0] > 0) || !(a[1] > 0)) return {err: "Isi DP dan angsuran untuk kedua baris pada tenor " + t + " bulan."};
+    if (d[0] === d[1]) return {err: "Kedua data harus punya DP yang berbeda."};
+    var slope = (a[1] - a[0]) / (d[1] - d[0]);
     if (slope >= 0) return {err: "Angsuran harus lebih kecil pada DP yang lebih besar. Cek lagi angkanya."};
-    return {ok: true, dp1: a.dp, dp2: b.dp, ang1: a.ang, slope: slope, lo: Math.min(a.dp, b.dp), hi: Math.max(a.dp, b.dp)};
+    return {ok: true, dp1: d[0], dp2: d[1], ang1: a[0], slope: slope, lo: Math.min(d[0], d[1]), hi: Math.max(d[0], d[1])};
   }
 
   // ---------- bagian 1 ----------
@@ -187,23 +257,31 @@
              '><label id="lbl-' + cid + '-' + t + '" for="' + cid + '-' + t + '">' + t + ' bulan</label>';
     }).join("");
   }
+  function cellAuto(i) { return !(st.ang[st.tenor][i] > 0) && eff(st.tenor, i) > 0; }
+  function cellText(i) { var m = st.ang[st.tenor][i]; return m > 0 ? fmt(m) : (cellAuto(i) ? fmt(Math.round(eff(st.tenor, i))) : ""); }
   function render() {
-    $("tbody").innerHTML = st.data[st.tenor].map(function (r, i) {
-      return '<tr><td class="fixed"><input data-r="' + i + '" data-f="dp" inputmode="numeric" placeholder="DP" aria-label="DP baris ' + (i + 1) + ' (ribu)" value="' + (r.dp === null ? "" : Number(r.dp).toLocaleString("id-ID")) + '"></td>' +
-             '<td><input data-r="' + i + '" data-f="ang" inputmode="numeric" placeholder="Angsuran" aria-label="Angsuran baris ' + (i + 1) + ' (ribu)" value="' + fmt(r.ang) + '"></td></tr>';
+    $("tbody").innerHTML = [0, 1].map(function (i) {
+      return '<tr><td class="fixed"><input data-r="' + i + '" data-f="dp" inputmode="numeric" placeholder="DP" aria-label="DP baris ' + (i + 1) + ' (ribu), berlaku untuk semua tenor" value="' + (st.dp[i] === null ? "" : Number(st.dp[i]).toLocaleString("id-ID")) + '"></td>' +
+             '<td><input' + (cellAuto(i) ? ' class="auto"' : '') + ' data-r="' + i + '" data-f="ang" inputmode="numeric" placeholder="Angsuran" aria-label="Angsuran baris ' + (i + 1) + ' (ribu)' + (cellAuto(i) ? ', perkiraan otomatis' : '') + '" value="' + cellText(i) + '"></td></tr>';
     }).join("");
   }
   $("tbody").addEventListener("input", function (e) {
     var el = e.target, f = el.dataset.f; if (!f) return;
     var d = digits(el.value); el.value = d ? Number(d).toLocaleString("id-ID") : "";
-    st.data[st.tenor][+el.dataset.r][f] = d ? Number(d) : (f === "dp" ? null : 0);
+    var i = +el.dataset.r;
+    if (f === "dp") st.dp[i] = d ? Number(d) : null;          // DP berlaku untuk semua tenor
+    else st.ang[st.tenor][i] = d ? Number(d) : 0;              // angsuran per tenor
+    if (f === "dp" || st.tenor === 12) TENORS.forEach(function (x) { if (x !== 12) st.ang[x] = [0, 0]; });   // data dasar berubah: isian manual tenor lain dikosongkan
+    el.classList.remove("auto");
     save(); refresh();
   });
   chips("s-tenor", st.tenor);
-  chips("c-tenor", st.tenor);
-  TENORS.forEach(function (t) { $("c-tenor-" + t).disabled = true; });   // tenor cek angsuran ikut bagian 1
+  $("jenis-" + st.jenis).checked = true;
+  $("s-jenis").addEventListener("change", function (e) { st.jenis = e.target.value === "beat" ? "beat" : "umum"; save(); render(); refresh(); });
+  $("tbody").addEventListener("focusin", function (e) { if (e.target.classList && e.target.classList.contains("auto")) e.target.select(); });
+  $("tbody").addEventListener("focusout", function () { setTimeout(paintAuto, 0); });
   $("s-tenor").addEventListener("change", function (e) {
-    st.tenor = Number(e.target.value); $("c-tenor-" + st.tenor).checked = true;
+    st.tenor = Number(e.target.value);
     save(); render(); refresh();
   });
 
@@ -214,7 +292,21 @@
       box.className = "ok";
       box.textContent = "Tenor " + st.tenor + " bulan: tiap DP naik 1.000 (Rp 1.000.000), angsuran turun sekitar " + id(-L.slope * 1000) + " (ribu).";
     }
+    paintAuto();
     calc();
+  }
+  function paintAuto() {                     // segarkan sel perkiraan di tabel (kecuali yang sedang diketik)
+    var t = st.tenor, ada = false;
+    Array.prototype.forEach.call($("tbody").querySelectorAll('input[data-f="ang"]'), function (el) {
+      var i = +el.dataset.r;
+      if (st.ang[t][i] > 0) { el.classList.remove("auto"); return; }
+      var v = eff(t, i);
+      if (v > 0) ada = true;
+      if (el === document.activeElement) return;
+      el.value = v > 0 ? fmt(Math.round(v)) : ""; el.classList.toggle("auto", v > 0);
+    });
+    var B = dasar(), janggal = B && (B.k < 0.093 || B.k > 0.115);   // di luar pola semua brosur yang pernah dipelajari
+    $("auto-note").textContent = janggal ? "Angka tenor 12 terlihat janggal, cek lagi sebelum memakai perkiraan." : ada ? "Garis putus-putus: perkiraan otomatis dari tenor 12, bisa beda sekitar " + rpR(GALAT[st.jenis][t]) + ". Ketik angka brosur untuk menggantinya." : "";
   }
 
   // ---------- bagian 2 ----------
@@ -226,18 +318,60 @@
   function calc() {
     var dpText = digits($("c-dp").value), t = st.tenor, L = line(t);
     $("dp-hint").textContent = dpText ? "= " + rpR(Number(dpText)) : "";
-    if (!L.ok) { show("warn", "Lengkapi data brosur tenor " + t + " bulan di bagian 1 dulu."); return; }
-    if (!dpText) { show("", "Masukkan DP untuk melihat angsuran."); return; }
+    if (!dpText) { show("", "Isi angka brosur dan DP yang dicek, hasilnya muncul di sini."); return; }
+    if (!L.ok) { show("warn", L.err); return; }
     var dp = Number(dpText);
     var ang = L.ang1 + L.slope * (dp - L.dp1);
-    if (ang <= 0) { show("warn", "DP terlalu besar: garis tren angsuran tenor " + t + " bulan sudah mencapai 0. Cek DP atau data brosur."); return; }
+    if (ang <= 0) { show("warn", "DP terlalu besar untuk dihitung. Cek lagi DP-nya."); return; }
     ang = Math.round(ang);
-    var outside = dp < L.lo || dp > L.hi;
     var u = (dp - L.dp1) / (L.dp2 - L.dp1), err = 0.5 * (Math.abs(1 - u) + Math.abs(u));   // batas selisih akibat pembulatan angka brosur
-    show("ok", '<div class="big">' + rpR(ang) + ' / bulan</div><div class="detail">' + id(ang) + ' ribu per bulan · DP ' + rpR(dp) + ' · ' + t +
-      ' bulan<br>Total bayar ' + rpR(dp + ang * t) +
-      (outside ? '<br>DP ini di luar rentang data brosur (' + id(L.lo) + ' sampai ' + id(L.hi) + ' ribu), jadi hasilnya estimasi dari garis tren, kemungkinan selisih sampai ± ' + id(Math.ceil(err)) + ' ribu karena angka brosur dibulatkan.' : '') + '</div>');
+    var note = isAuto(t) ? "Perkiraan otomatis dari tenor 12, bisa beda sekitar " + rpR(GALAT[st.jenis][t]) + " dari angka brosur."
+      : (dp === L.dp1 || dp === L.dp2) ? "Sesuai brosur." : "Perkiraan, bisa beda sekitar " + rpR(Math.ceil(err)) + " dari angka resmi.";
+    show("ok", '<div class="big">' + rpR(ang) + ' / bulan</div><div class="detail">Tenor ' + t + ' bulan · DP ' + rpR(dp) +
+      '<br>Total bayar ' + rpR(dp + ang * t) + '<br>' + note + '</div>');
   }
+
+  // ---------- salin angsuran semua tenor (untuk ditempel ke WhatsApp) ----------
+  function angsuranUntuk(t, dp) {            // angsuran (ribu) untuk DP tertentu pada tenor t, atau null kalau belum bisa dihitung
+    var L = line(t);
+    if (!L.ok) return null;
+    var a = L.ang1 + L.slope * (dp - L.dp1);
+    return a > 0 ? Math.round(a) : null;
+  }
+  var rupiahWA = function (ribu) { return String(Math.round(ribu) * 1000).replace(/\B(?=(\d{3})+(?!\d))/g, "."); };   // 2618 ribu -> "2.618.000", 950 ribu -> "950.000"
+  function pesan(teks) { $("copy-msg").textContent = teks; }
+  function salin(teks, selesai) {
+    function cadangan() {
+      var ta = document.createElement("textarea"), ok = false;
+      ta.value = teks; ta.setAttribute("readonly", ""); ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+      document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, teks.length);
+      try { ok = document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta); selesai(ok);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(teks).then(function () { selesai(true); }, cadangan);
+    else cadangan();
+  }
+  var timerSalin = null;
+  $("btn-copy").onclick = function () {
+    var dpText = digits($("c-dp").value);
+    if (!dpText) { pesan("Isi DP pembeli dulu."); $("c-dp").focus(); return; }
+    var dp = Number(dpText), baris = [], kurang = [];
+    TENORS.forEach(function (t) {
+      var a = angsuranUntuk(t, dp);
+      if (a === null) kurang.push(t); else baris.push(t + " : Rp. " + rupiahWA(a));
+    });
+    if (kurang.length) { pesan("Tenor " + kurang.join(", ") + " bulan belum bisa dihitung. Cek angka brosur atau DP-nya."); return; }
+    var teks = baris.join("\n");
+    salin(teks, function (ok) {
+      if (!ok) { pesan("Tidak bisa menyalin otomatis. Salin manual:\n" + teks); return; }
+      var b = $("btn-copy"); b.classList.add("done"); $("copy-label").textContent = "Tersalin";
+      var perkiraan = TENORS.filter(function (t) { return isAuto(t); });
+      pesan("Tinggal tempel di WhatsApp." + (perkiraan.length ? "\nTenor " + perkiraan.join(", ") + " masih perkiraan otomatis, cocokkan dulu dengan brosur." : ""));
+      clearTimeout(timerSalin);
+      timerSalin = setTimeout(function () { b.classList.remove("done"); $("copy-label").textContent = "Salin angsuran semua tenor"; if (!perkiraan.length) pesan(""); }, 2600);
+    });
+  };
+  $("c-dp").addEventListener("input", function () { pesan(""); });
 
   render(); refresh();
 })();
