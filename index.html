@@ -19,15 +19,18 @@
   main { max-width: 760px; margin: 0 auto; padding: 20px 16px 56px; display: grid; gap: 18px; }
 
   /* ---------- header ---------- */
-  header { position: relative; overflow: hidden; background: var(--accent); color: var(--accent-ink); padding: 30px 26px 32px; border-radius: 18px; }
-  header::after { content: "Rp"; position: absolute; right: -6px; bottom: -34px; font-size: 9.5rem; font-weight: 800; line-height: 1; letter-spacing: -.04em; color: #fff; opacity: .1; pointer-events: none; }
-  h1 { position: relative; z-index: 1; font-size: clamp(1.7rem, 6vw, 2.3rem); line-height: 1.15; font-weight: 800; letter-spacing: -.025em; margin: 0 0 8px; }
-  h2 { display: flex; align-items: center; gap: 12px; font-size: 1.15rem; line-height: 1.3; font-weight: 700; letter-spacing: -.01em; margin: 0 0 6px; color: var(--ink); }
+  header { position: relative; overflow: hidden; background: var(--accent); color: var(--accent-ink); padding: 30px 26px 30px; border-radius: 20px; }
+  header::after { content: "Rp"; position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 8rem; font-weight: 800; line-height: 1; letter-spacing: -.04em; color: #fff; opacity: .12; pointer-events: none; display: none; }
+  h1 { font-size: clamp(1.7rem, 6vw, 2.3rem); line-height: 1.15; font-weight: 800; letter-spacing: -.025em; margin: 0 0 8px; }
+  h2 { display: flex; align-items: center; gap: 12px; font-size: 1.15rem; line-height: 1.3; font-weight: 700; letter-spacing: -.01em; margin: 0; color: var(--ink); }
   p.sub { margin: 0; color: var(--muted); max-width: 62ch; font-size: .95rem; }
-  header p.sub { position: relative; z-index: 1; color: #fff0f2; font-size: 1rem; max-width: 54ch; }
+  header p.sub { color: #fff0f2; font-size: 1rem; max-width: 50ch; }
+  header p.legend { display: inline-block; margin: 14px 0 0; padding: 7px 14px; border: 1px solid rgba(255, 255, 255, .45); border-radius: 12px; background: rgba(255, 255, 255, .14); font-size: .9rem; color: #fff; }
+  header p.legend b { font-weight: 800; }
 
   /* ---------- panel ---------- */
-  section { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px 22px; box-shadow: 0 18px 32px -26px rgba(155, 12, 35, .55); }
+  section { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px 22px; box-shadow: 0 18px 32px -26px rgba(155, 12, 35, .55); }
+  main > section:last-of-type { border-color: #eeb3bc; box-shadow: 0 24px 40px -28px rgba(155, 12, 35, .75); }
   .step { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: .95rem; font-weight: 800; }
 
   .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; margin-top: 18px; }
@@ -35,9 +38,9 @@
   input { font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; width: 100%; transition: border-color .15s; }
   input:hover { border-color: #dcaab1; }
   input:focus { border-color: var(--accent); }
-  input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  input:focus-visible { outline: 2px solid transparent; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(200, 16, 46, .18); }
   input::placeholder { color: #b59ea2; font-weight: 400; }
-  #c-dp { font-size: 1.35rem; font-weight: 700; padding: 14px 16px; }
+  #c-dp { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; padding: 14px 16px; }
   .hint { min-height: 1.4em; margin: 6px 0 0; font-size: .9rem; font-weight: 600; color: var(--accent-dark); }
 
   fieldset { border: 0; padding: 0; margin: 0; flex: 1 1 100%; min-width: 0; }
@@ -47,49 +50,59 @@
   /* ---------- pilihan tenor ---------- */
   .chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; position: relative; }
   .chips input { position: absolute; opacity: 0; width: 1px; height: 1px; padding: 0; }
-  .chips label { cursor: pointer; text-align: center; padding: 11px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font-weight: 600; font-size: .95rem; transition: background-color .15s, border-color .15s, color .15s; }
-  .chips input:not(:disabled) + label:hover { border-color: var(--accent); color: var(--accent); }
+  .chips label { cursor: pointer; text-align: center; white-space: nowrap; padding: 11px 6px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font-weight: 600; font-size: .95rem; transition: background-color .15s, border-color .15s, color .15s; }
+  .chips input:not(:disabled):not(:checked) + label:hover { border-color: var(--accent); color: var(--accent); background: var(--tint); }
   .chips input:checked + label { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   .chips input:disabled + label { cursor: default; }
   .chips input:disabled:not(:checked) + label { opacity: .4; }
   .chips input:focus-visible + label { outline: 3px solid var(--accent-dark); outline-offset: 2px; }
 
   /* ---------- tabel brosur ---------- */
-  .tablewrap { overflow-x: auto; margin-top: 18px; }
+  .tablewrap { overflow-x: auto; margin: 14px -6px 0; padding: 0 6px 4px; }
   table { width: 100%; border-collapse: separate; border-spacing: 0 8px; min-width: 360px; }
   th { font-size: .85rem; color: var(--muted); font-weight: 600; text-align: left; padding: 0 8px 0 14px; }
-  th + th { padding: 0 14px 0 8px; text-align: right; }
+  th + th { padding: 0 14px 0 18px; text-align: right; }
   td { padding: 0; }
   td input { text-align: right; font-weight: 600; padding: 12px 14px; }
-  td.fixed { font-weight: 700; color: var(--accent-dark); background: var(--tint); padding: 0 14px; width: 40%; border: 1.5px solid var(--line); border-right: 0; border-radius: 12px 0 0 12px; font-size: 1.05rem; }
-  td.fixed + td { padding-left: 0; }
-  td.fixed + td input { border-radius: 0 12px 12px 0; }
+  td.fixed { width: 40%; }
+  td.fixed input { text-align: left; font-weight: 700; font-size: 1.05rem; color: var(--accent-dark); background: var(--tint); border-color: #f0c3ca; }
+  td.fixed input:focus-visible { background: var(--bg); border-color: var(--accent); }
+  td.fixed input::placeholder { color: #c98a94; }
+  td.fixed + td { padding-left: 10px; }
 
   /* ---------- status model ---------- */
-  #model { margin-top: 16px; padding: 12px 16px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); font-size: .92rem; }
-  #model.ok { background: var(--tint); border-color: #f2bcc4; border-left: 5px solid var(--accent); color: var(--ink); }
+  #model { margin-top: 4px; padding: 12px 16px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); font-size: .92rem; }
+  #model.ok { display: none; }
   #model.warn, #hasil.warn { background: var(--tint); border: 1.5px dashed var(--accent-dark); color: var(--accent-dark); font-weight: 600; }
+  #model.warn::before, #hasil.warn::before { content: "!"; display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 10px; border-radius: 50%; background: var(--accent-dark); color: #fff; font-size: .8rem; font-weight: 800; vertical-align: 1px; }
 
   /* ---------- hasil (tiket) ---------- */
-  #hasil { position: relative; margin-top: 18px; padding: 22px; border-radius: 16px; background: var(--bg); border: 1.5px dashed var(--line); color: var(--muted); text-align: center; }
-  #hasil.warn { text-align: left; }
-  #hasil.ok { background: var(--accent); border: 1px solid var(--accent); color: var(--accent-ink); text-align: left; padding: 26px 30px; box-shadow: 0 22px 34px -24px rgba(155, 12, 35, .8); }
-  #hasil.ok::before, #hasil.ok::after { content: ""; position: absolute; top: 50%; width: 22px; height: 22px; margin-top: -11px; border-radius: 50%; background: var(--surface); }
-  #hasil.ok::before { left: -12px; }
-  #hasil.ok::after { right: -12px; }
-  .big { font-size: clamp(1.8rem, 7.5vw, 2.7rem); font-weight: 800; line-height: 1.15; letter-spacing: -.03em; }
-  .detail { margin-top: 12px; font-size: .95rem; line-height: 1.75; }
+  #hasil { --pad: 30px; container-type: inline-size; position: relative; margin-top: 18px; padding: 24px 22px; border-radius: 18px; background: var(--bg); border: 1.5px dashed var(--line); color: var(--muted); text-align: center; }
+  #hasil:not(.ok):not(.warn)::before { content: "Rp"; display: grid; place-items: center; width: 46px; height: 46px; margin: 0 auto 10px; border-radius: 50%; background: var(--tint); color: var(--accent); font-weight: 800; }
+  #hasil.warn { text-align: left; padding: 18px 20px; }
+  #hasil.ok { background: var(--accent); border: 1px solid var(--accent); color: var(--accent-ink); text-align: left; padding: 26px var(--pad) 24px; box-shadow: 0 22px 34px -24px rgba(155, 12, 35, .8); }
+  .big { font-size: clamp(1.5rem, 8.2cqw, 2.8rem); font-weight: 800; line-height: 1.15; letter-spacing: -.03em; }
+  .detail { position: relative; margin-top: 18px; padding-top: 16px; border-top: 2px dashed rgba(255, 255, 255, .5); font-size: .95rem; line-height: 1.75; }
   #hasil.ok .detail { color: var(--accent-ink); }
+  /* lekukan tiket tepat di garis putus-putus */
+  .detail::before, .detail::after { content: ""; position: absolute; top: -12px; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); }
+  .detail::before { left: calc(-1 * var(--pad) - 12px); }
+  .detail::after { right: calc(-1 * var(--pad) - 12px); }
 
-  @media (min-width: 560px) {
-    label.f { flex: 1 1 240px; }
-    fieldset { flex: 2 1 320px; }
+  @media (min-width: 600px) {
+    header { padding: 34px 32px; }
+    header::after { display: block; }
     section { padding: 28px 28px; }
+  }
+  @media (min-width: 960px) {
+    main { max-width: 1060px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; padding-top: 28px; align-items: start; }
+    header { grid-column: 1 / -1; }
+    main > section:last-of-type { position: sticky; top: 20px; align-self: start; }
   }
   @media (max-width: 440px) {
     .chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     section { padding: 22px 16px; }
-    #hasil.ok { padding: 24px 24px; }
+    #hasil { --pad: 22px; }
   }
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
@@ -100,13 +113,12 @@
 <main>
   <header>
     <h1>Kalkulator angsuran</h1>
-    <p class="sub">Salin data dari brosur di bagian 1, lalu cek angsuran untuk DP berapa pun di bagian 2. Semua angka dalam ribu rupiah: 5.000 = Rp 5.000.000.</p>
+    <p class="legend">Semua angka dalam ribu rupiah: <b>5.000</b> = <b>Rp 5.000.000</b></p>
   </header>
 
   <section aria-labelledby="h-setup">
     <h2 id="h-setup"><span class="step" aria-hidden="true">1</span>Data brosur (pengaturan sistem)</h2>
-    <p class="sub">Pilih tenor, lalu isi angsuran per bulan dari brosur untuk 2 DP yang tertera di tabel. Ulangi untuk tiap tenor. Data tiap tenor disimpan sendiri-sendiri.</p>
-    <fieldset class="solo"><legend>Tenor (bulan)</legend><div class="chips" id="s-tenor"></div></fieldset>
+    <fieldset class="solo"><legend>Tenor</legend><div class="chips" id="s-tenor"></div></fieldset>
     <div class="tablewrap">
       <table>
         <thead><tr><th>DP di brosur (ribu)</th><th>Angsuran per bulan (ribu)</th></tr></thead>
@@ -118,10 +130,9 @@
 
   <section aria-labelledby="h-calc">
     <h2 id="h-calc"><span class="step" aria-hidden="true">2</span>Cek angsuran</h2>
-    <p class="sub">Tenor mengikuti pilihan di bagian 1. Masukkan DP (ribu), hasilnya langsung muncul.</p>
     <div class="row">
       <label class="f">DP pembeli (ribu)<input id="c-dp" inputmode="numeric" placeholder="10.000"></label>
-      <fieldset><legend>Tenor (sesuai pilihan di atas)</legend><div class="chips" id="c-tenor"></div></fieldset>
+      <fieldset><legend>Tenor</legend><div class="chips" id="c-tenor"></div></fieldset>
     </div>
     <p class="hint" id="dp-hint"></p>
     <div id="hasil" role="status" aria-live="polite">Masukkan DP untuk melihat angsuran.</div>
@@ -132,7 +143,7 @@
 (function () {
   var KEY = "kalkulator-angsuran-v6";
   var TENORS = [12, 18, 24, 30];
-  var DP_TETAP = [3000, 4000];   // DP di data sistem (ribu), tetap dan tidak bisa diubah pengguna
+  var DP_AWAL = [3000, 4000];   // DP awal di data sistem (ribu), hanya nilai bawaan: pengguna bisa mengubahnya
   var $ = function (id) { return document.getElementById(id); };
   var digits = function (s) { return String(s).replace(/\D/g, ""); };
   var id = function (n) { return Math.round(n).toLocaleString("id-ID"); };
@@ -140,7 +151,7 @@
   var fmt = function (n) { return n ? Number(n).toLocaleString("id-ID") : ""; };
 
   var st = load();
-  function blankRows() { return DP_TETAP.map(function (d) { return {dp: d, ang: 0}; }); }
+  function blankRows() { return DP_AWAL.map(function (d) { return {dp: d, ang: 0}; }); }
   function load() {
     var s = null, out = {tenor: 12, data: {}};
     try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
@@ -148,8 +159,12 @@
     TENORS.forEach(function (t) {
       var d = s && s.data && s.data[t];
       out.data[t] = blankRows();
-      // angsuran lama dipakai hanya kalau DP-nya sama dengan DP tetap, supaya pasangan DP dan angsuran tidak tertukar
-      if (d && d.length === 2) d.forEach(function (r, i) { if (r.dp === DP_TETAP[i] && r.ang > 0) out.data[t][i].ang = r.ang; });
+      // DP dan angsuran tersimpan dipakai sebagai satu pasangan, supaya tidak tertukar
+      if (d && d.length === 2) d.forEach(function (r, i) {
+        if (!r) return;
+        if (r.dp === null || (isFinite(r.dp) && r.dp >= 0 && r.dp !== "")) out.data[t][i].dp = r.dp === null ? null : Number(r.dp);
+        if (r.ang > 0) out.data[t][i].ang = Number(r.ang);
+      });
     });
     return out;
   }
@@ -158,7 +173,7 @@
   // garis tren per tenor: angsuran(DP) = ang1 + kemiringan * (DP - dp1)
   function line(t) {
     var a = st.data[t][0], b = st.data[t][1];
-    if (a.dp === null || b.dp === null || !(a.ang > 0) || !(b.ang > 0)) return {err: "Isi angsuran untuk kedua DP pada tenor " + t + " bulan."};
+    if (a.dp === null || b.dp === null || !(a.ang > 0) || !(b.ang > 0)) return {err: "Isi DP dan angsuran untuk kedua baris pada tenor " + t + " bulan."};
     if (a.dp === b.dp) return {err: "Kedua data harus punya DP yang berbeda."};
     var slope = (b.ang - a.ang) / (b.dp - a.dp);
     if (slope >= 0) return {err: "Angsuran harus lebih kecil pada DP yang lebih besar. Cek lagi angkanya."};
@@ -174,8 +189,8 @@
   }
   function render() {
     $("tbody").innerHTML = st.data[st.tenor].map(function (r, i) {
-      return '<tr><td class="fixed">' + Number(r.dp).toLocaleString("id-ID") + '</td>' +
-             '<td><input data-r="' + i + '" data-f="ang" inputmode="numeric" placeholder="Angsuran" aria-label="Angsuran untuk DP ' + Number(r.dp).toLocaleString("id-ID") + ' ribu" value="' + fmt(r.ang) + '"></td></tr>';
+      return '<tr><td class="fixed"><input data-r="' + i + '" data-f="dp" inputmode="numeric" placeholder="DP" aria-label="DP baris ' + (i + 1) + ' (ribu)" value="' + (r.dp === null ? "" : Number(r.dp).toLocaleString("id-ID")) + '"></td>' +
+             '<td><input data-r="' + i + '" data-f="ang" inputmode="numeric" placeholder="Angsuran" aria-label="Angsuran baris ' + (i + 1) + ' (ribu)" value="' + fmt(r.ang) + '"></td></tr>';
     }).join("");
   }
   $("tbody").addEventListener("input", function (e) {
